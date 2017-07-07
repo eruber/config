@@ -3,8 +3,8 @@
 """
 config
 
-
-A simple configuration file manager based on JSON.
+Abstract Base Class for implementing a simple configuration manager.
+Sub-class it and provide your own read/write methods.
 
 If you really want a persistent data store module rather than a config module,
 chech out: 
@@ -14,11 +14,9 @@ you can find it in the Python Standard Library on-line documentation:
 
     https://docs.python.org/3/library/shelve.html
 
-See the unit tests in test_config.py
-
 """
 import os.path
-import json
+import abc
 
 #------------------------------------------------------------------------------
 class ConfigFileNamesDirException(Exception):
@@ -28,15 +26,20 @@ class ConfigFileNamesDirException(Exception):
     pass
 
 #------------------------------------------------------------------------------
-DEFAULT_CFG_FILE = "config.json"
-DEFAULT_CFG = {}
-DEFAULT_FORCE = False
-DEFAULT_WRITE_THRU = False
-DEFAULT_ENCODING = 'utf-8'
+
 
 #------------------------------------------------------------------------------
-class Config(object):
-    def __init__(self, cfgfile=DEFAULT_CFG_FILE, encoding=DEFAULT_ENCODING, cfg=DEFAULT_CFG, force=DEFAULT_FORCE, write_thru=DEFAULT_WRITE_THRU):
+class Config(metaclass=abc.ABCMeta):
+
+    # Class Attributes, 
+    # not an attribute of an *instance* of a class, but the class itself
+    DEFAULT_CFG_FILE   = "config.cfg"
+    DEFAULT_CFG        = {}
+    DEFAULT_FORCE      = False
+    DEFAULT_WRITE_THRU = False
+    DEFAULT_ENCODING   = 'utf-8'
+
+    def __init__(self, cfgfile=None, encoding=None, cfg=None, force=None, write_thru=None):
         """
         cfgfile - configurate file name, relative or absolute
 
@@ -53,13 +56,13 @@ class Config(object):
                      by using the setter property will be immediated written 
                      thru to the file system
         """
-        cfg_file = cfgfile if isinstance(cfgfile, str) else DEFAULT_CFG_FILE
+        cfg_file = cfgfile if isinstance(cfgfile, str) else self.DEFAULT_CFG_FILE
 
         self._cfgfile    = os.path.abspath(cfg_file)
-        self._encoding   = encoding if isinstance(encoding, str) else DEFAULT_ENCODING
-        self._cfg        = cfg if isinstance(cfg, dict) else DEFAULT_CFG
-        self._force      = force if isinstance(force, bool) else DEFAULT_FORCE
-        self._write_thru = write_thru if isinstance(write_thru, bool) else DEFAULT_WRITE_THRU
+        self._encoding   = encoding if isinstance(encoding, str) else self.DEFAULT_ENCODING
+        self._cfg        = cfg if isinstance(cfg, dict) else self.DEFAULT_CFG
+        self._force      = force if isinstance(force, bool) else self.DEFAULT_FORCE
+        self._write_thru = write_thru if isinstance(write_thru, bool) else self.DEFAULT_WRITE_THRU
 
         self._cfg_def_passed = cfg
 
@@ -95,22 +98,21 @@ class Config(object):
                 self.write()
 
 
+    @abc.abstractmethod
     def read(self):
         """
         Reads the cfgfile, returns cfg if not errors.
+        This method should be over-ridden in a sub-class.
         """
-        with open(self._cfgfile, encoding=self._encoding, mode='r') as cp:
-            self._cfg = json.load(cp)
+        #raise NotImplementedError
 
-        return(self._cfg)
-
-
+    @abc.abstractmethod
     def write(self):
         """
-        Writes cfg to file system and return it. 
+        Writes cfg to file system and return it.
+        This method should be over-ridden in a sub-class.
         """
-        with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
-            json.dump(self._cfg, cp, indent=4, sort_keys = True)
+        #raise NotImplementedError
 
     @property
     def cfg(self):
@@ -164,5 +166,5 @@ class Config(object):
 if __name__ == "__main__":
 
     from unittest import main
-    main(module='test_config', verbosity=2)
+    main(module='tests.test_config', verbosity=2)
 

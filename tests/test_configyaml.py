@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 #coding=utf-8
 """
-config unit tests
+configyaml unit tests
 """
 import os.path
 
 # module under test
-import config
+import configyaml
 
 # unit testing framweork
 import unittest
 
 D = {'log' : 'whatever-log-filename.log', 'verbose' : True}
 
-CUSTOM_CFG_FILE = 'custom.cfg'
+CUSTOM_CFG_FILE1 = 'custom.cfg'
+CUSTOM_CFG_FILE2 = 'configurate.yaml'
 
-class ConfigTest(unittest.TestCase):
+class ConfigYamlTest(unittest.TestCase):
 
     #--------------------------------------------------------------------------
     # Test Fixtures
@@ -27,17 +28,21 @@ class ConfigTest(unittest.TestCase):
         # forces initialization of the config to the 
         # default configuration and does not read the
         # config file
-        self.c = config.Config(force=True)
+        self.c = configyaml.Config(force=True)
 
     def tearDown(self):
         # cleanup cfg file trash
-        custom  = os.path.abspath(CUSTOM_CFG_FILE)
+        custom  = os.path.abspath(CUSTOM_CFG_FILE1)
         if os.path.exists(custom):
             os.remove(custom)
 
-        default = os.path.abspath(config.DEFAULT_CFG_FILE)
+        default = os.path.abspath(self.c.DEFAULT_CFG_FILE)
         if os.path.exists(default):
             os.remove(default)
+
+        custom2 = os.path.abspath(CUSTOM_CFG_FILE2)
+        if os.path.exists(custom2):
+            os.remove(custom2)
 
 
     #--------------------------------------------------------------------------
@@ -46,7 +51,7 @@ class ConfigTest(unittest.TestCase):
 
     def test_default_init_and_cfg_getter(self):
         # setUp has initialized self.c
-        self.assertEqual(self.c.cfg, config.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
 
 
     def test_cfg_setter_basic(self):
@@ -75,9 +80,9 @@ class ConfigTest(unittest.TestCase):
         self.c.write()
         from_file_sys = self.c.read()
 
-        self.c = config.Config(force=True)
+        self.c = configyaml.Config(force=True)
 
-        self.assertEqual(self.c.cfg, config.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
 
     def test_default_write_thru_disabled(self):
         """
@@ -93,8 +98,8 @@ class ConfigTest(unittest.TestCase):
         # updated from the file system
         e = self.c.read()
 
-        self.assertEqual(e, config.DEFAULT_CFG)
-        self.assertEqual(self.c.cfg, config.DEFAULT_CFG)
+        self.assertEqual(e, self.c.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
         self.assertFalse(s == self.c.cfg)
 
     def test_write_thru_enabled_via_constructor(self):
@@ -103,7 +108,7 @@ class ConfigTest(unittest.TestCase):
         The self.c.cfg in memory does not match what is on the file system.
         """
         # setUp has initialized self.c, cut we do not use it in this test
-        self.c = config.Config(write_thru=True)
+        self.c = configyaml.Config(write_thru=True)
 
         # this is now in memory and in the file system
         self.c.cfg = {'width': 12}
@@ -138,7 +143,7 @@ class ConfigTest(unittest.TestCase):
         # setUp has initialized self.c
         previous_cfg = self.c.cfg
         self.c.cfg = (1, 2, 3)
-        self.assertTrue(previous_cfg == config.DEFAULT_CFG)
+        self.assertTrue(previous_cfg == self.c.DEFAULT_CFG)
 
     def test_write_thru_enabled_via_property(self):
         """
@@ -164,7 +169,7 @@ class ConfigTest(unittest.TestCase):
         """
         """
         # setUp has initialized self.c, but we do not use it here
-        c = config.Config(cfg={'width' : 12, 'height' : 92}, force=True)
+        c = configyaml.Config(cfg={'width' : 12, 'height' : 92}, force=True)
         self.assertEqual(c.cfg, {'width' : 12, 'height' : 92})
 
     def test_cfgfile_property_getter_default_value(self):
@@ -172,14 +177,14 @@ class ConfigTest(unittest.TestCase):
         """
         # setUp has initialized self.c
         cfg_file = self.c.cfgfile
-        self.assertEqual(os.path.basename(cfg_file), config.DEFAULT_CFG_FILE)
+        self.assertEqual(os.path.basename(cfg_file), self.c.DEFAULT_CFG_FILE)
 
     def test_cfgfile_property_getter_passed_value(self):
         """
         """
         # setUp has initialized self.c, but we do not use it here
-        custom_cfg_file = CUSTOM_CFG_FILE
-        c = config.Config(cfgfile=custom_cfg_file)
+        custom_cfg_file = CUSTOM_CFG_FILE1
+        c = configyaml.Config(cfgfile=custom_cfg_file)
         cfg_file = c.cfgfile
         self.assertEqual(os.path.basename(cfg_file), custom_cfg_file)
 
@@ -189,8 +194,8 @@ class ConfigTest(unittest.TestCase):
         then the default cfgfile is used
         """
         # setUp has initialized self.c, but we do not use it here
-        c = config.Config(cfgfile=True)
-        self.assertEqual(os.path.basename(c.cfgfile), config.DEFAULT_CFG_FILE)
+        c = configyaml.Config(cfgfile=True)
+        self.assertEqual(os.path.basename(c.cfgfile), c.DEFAULT_CFG_FILE)
 
     def test_invalid_cfg_on_init(self):
         """
@@ -198,8 +203,8 @@ class ConfigTest(unittest.TestCase):
         then the default cfg is used
         """
         # setUp has initialized self.c, but we do not use it here
-        c = config.Config(cfg=[1, 2, 3])
-        self.assertEqual(c.cfg, config.DEFAULT_CFG)
+        c = configyaml.Config(cfg=[1, 2, 3])
+        self.assertEqual(c.cfg, c.DEFAULT_CFG)
 
     def test_invalid_write_thru_flag_on_init(self):
         """
@@ -207,8 +212,8 @@ class ConfigTest(unittest.TestCase):
         then the default write_thru is used
         """
         # setUp has initialized self.c, but we do not use it here
-        c = config.Config(write_thru=1)
-        self.assertEqual(c.writethru, config.DEFAULT_WRITE_THRU)
+        c = configyaml.Config(write_thru=1)
+        self.assertEqual(c.writethru, c.DEFAULT_WRITE_THRU)
 
     def test_invalid_force_flag_on_init(self):
         """
@@ -216,8 +221,20 @@ class ConfigTest(unittest.TestCase):
         then the default force is used.
         """
         # setUp has initialized self.c, but we do not use it here
-        c = config.Config(force=1)
+        c = configyaml.Config(force=1)
         # if the non default value of force had been used,
         # then the cfg would be the devault
-        self.assertEqual(c._force, config.DEFAULT_FORCE)
+        self.assertEqual(c._force, c.DEFAULT_FORCE)
 
+    def test_yaml(self):
+        D = dict()
+        D['Application'] = dict()
+        D['Shell'] = dict()
+        D['Application']['name'] = 'coolapp'
+        D['Application']['log']  = 'coolapp.log'
+        D['Shell']['debug'] = 'off'
+        D['Shell']['size'] = (42, 123)
+        D['Shell']['coins'] = [12, 33]
+
+        c = configyaml.Config(cfgfile=CUSTOM_CFG_FILE2, cfg=D, force=True)
+        self.assertEqual(c.cfg, D)
