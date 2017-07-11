@@ -4,9 +4,12 @@
 configyaml unit tests
 """
 import os.path
+import shutil
 
 # module under test
 import configyaml
+
+from config import ConfigFileNamesDirException
 
 # unit testing framweork
 import unittest
@@ -15,6 +18,8 @@ D = {'log' : 'whatever-log-filename.log', 'verbose' : True}
 
 CUSTOM_CFG_FILE1 = 'custom.cfg'
 CUSTOM_CFG_FILE2 = 'configurate.yaml'
+
+DIR_CFG_FILE = 'configuration'
 
 class ConfigYamlTest(unittest.TestCase):
 
@@ -43,6 +48,10 @@ class ConfigYamlTest(unittest.TestCase):
         custom2 = os.path.abspath(CUSTOM_CFG_FILE2)
         if os.path.exists(custom2):
             os.remove(custom2)
+
+        dir_cfg = os.path.abspath(DIR_CFG_FILE)
+        if os.path.exists(dir_cfg):
+            shutil.rmtree(dir_cfg)
 
 
     #--------------------------------------------------------------------------
@@ -136,14 +145,26 @@ class ConfigYamlTest(unittest.TestCase):
         # non-boolean passed, should result in no change
         # to writethru property
         previous_writethru = self.c.writethru
-        self.c.writethru = 12
-        self.assertTrue(self.c.writethru == previous_writethru)
+        try:
+            # This should be a boolean, so expect a TypeError
+            self.c.writethru = 12
+        except TypeError:
+            self.assertRaises(TypeError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
 
     def test_invalid_dict_value_in_cfg_property_setter(self):
         # setUp has initialized self.c
         previous_cfg = self.c.cfg
-        self.c.cfg = (1, 2, 3)
-        self.assertTrue(previous_cfg == self.c.DEFAULT_CFG)
+        try:
+            # This should be a dictionary, so expect a TypeError
+            self.c.cfg = (1, 2, 3)
+        except TypeError:
+            self.assertRaises(TypeError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
 
     def test_write_thru_enabled_via_property(self):
         """
@@ -238,3 +259,16 @@ class ConfigYamlTest(unittest.TestCase):
 
         c = configyaml.Config(cfgfile=CUSTOM_CFG_FILE2, cfg=D, force=True)
         self.assertEqual(c.cfg, D)
+
+    def test_custom_exception_cfgfile_names_a_dir_not_a_file(self):
+        dir_cfg = os.path.abspath(DIR_CFG_FILE)
+        if not os.path.exists(dir_cfg):
+            os.makedirs(dir_cfg)
+
+        try:
+            d = configyaml.Config(cfgfile=dir_cfg)
+        except ConfigFileNamesDirException:
+            self.assertRaises(ConfigFileNamesDirException)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)

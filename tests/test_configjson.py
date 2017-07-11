@@ -4,9 +4,12 @@
 config unit tests
 """
 import os.path
+import shutil
 
 # module under test
 import configjson
+
+from config import ConfigFileNamesDirException
 
 # unit testing framweork
 import unittest
@@ -14,6 +17,8 @@ import unittest
 D = {'log' : 'whatever-log-filename.log', 'verbose' : True}
 
 CUSTOM_CFG_FILE = 'custom.cfg'
+
+DIR_CFG_FILE = 'configuration'
 
 class ConfigJsonTest(unittest.TestCase):
 
@@ -38,6 +43,10 @@ class ConfigJsonTest(unittest.TestCase):
         default = os.path.abspath(self.c.DEFAULT_CFG_FILE)
         if os.path.exists(default):
             os.remove(default)
+
+        dir_cfg = os.path.abspath(DIR_CFG_FILE)
+        if os.path.exists(dir_cfg):
+            shutil.rmtree(dir_cfg)
 
 
     #--------------------------------------------------------------------------
@@ -67,7 +76,6 @@ class ConfigJsonTest(unittest.TestCase):
         from_file_sys = self.c.read()
         
         self.assertEqual(from_file_sys, self.c.cfg)
-
 
     def test_force_parameter(self):
         # setUp has initialized self.c
@@ -131,14 +139,26 @@ class ConfigJsonTest(unittest.TestCase):
         # non-boolean passed, should result in no change
         # to writethru property
         previous_writethru = self.c.writethru
-        self.c.writethru = 12
-        self.assertTrue(self.c.writethru == previous_writethru)
+        try:
+            # sheuld be a boolean, expect a TypeError
+            self.c.writethru = 12
+        except TypeError:
+            self.assertRaises(TypeError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
 
     def test_invalid_dict_value_in_cfg_property_setter(self):
         # setUp has initialized self.c
         previous_cfg = self.c.cfg
-        self.c.cfg = (1, 2, 3)
-        self.assertTrue(previous_cfg == self.c.DEFAULT_CFG)
+        try:
+            # should assing a dictionary, expect a TypeError
+            self.c.cfg = (1, 2, 3)
+        except TypeError:
+            self.assertRaises(TypeError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
 
     def test_write_thru_enabled_via_property(self):
         """
@@ -192,13 +212,32 @@ class ConfigJsonTest(unittest.TestCase):
         c = configjson.Config(cfgfile=True)
         self.assertEqual(os.path.basename(c.cfgfile), c.DEFAULT_CFG_FILE)
 
+    def test_invalid_cfgfile_assignment(self):
+        """
+        Assert that if a non-string value is set to cfgfile,
+        then a TypeError is raised
+        """
+        original_cfgfile = self.c.cfgfile
+        try:
+            self.c.cfgfile = False
+        except TypeError:
+            self.assertRaises(TypeError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
+
+        self.assertTrue(self.c.cfgfile == original_cfgfile)
+
+
     def test_invalid_cfg_on_init(self):
         """
         Assert that if a non-dictionary value is passed as cfg,
         then the default cfg is used
         """
         # setUp has initialized self.c, but we do not use it here
+        # cfg should be a dictionary, expect cfg to take on its default value
         c = configjson.Config(cfg=[1, 2, 3])
+
         self.assertEqual(c.cfg, c.DEFAULT_CFG)
 
     def test_invalid_write_thru_flag_on_init(self):
@@ -221,3 +260,15 @@ class ConfigJsonTest(unittest.TestCase):
         # then the cfg would be the devault
         self.assertEqual(c._force, c.DEFAULT_FORCE)
 
+    def test_custom_exception_cfgfile_names_a_dir_not_a_file(self):
+        dir_cfg = os.path.abspath(DIR_CFG_FILE)
+        if not os.path.exists(dir_cfg):
+            os.makedirs(dir_cfg)
+
+        try:
+            d = configjson.Config(cfgfile=dir_cfg)
+        except ConfigFileNamesDirException:
+            self.assertRaises(ConfigFileNamesDirException)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
