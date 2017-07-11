@@ -1,19 +1,13 @@
 #!/usr/bin/env python
 #coding=utf-8
 """
-configyaml
+Module configyaml
 
-A simple configuration file manager based on YAML.
+This class sub-classes the abstract base class, Config, in the config module
+to provide YAM specific configuration read and write methods.
 
-If you really want a persistent data store module rather than a config module,
-chech out: 
-            shelve - Python object persistence
+.. moduleauthor:: E.R. Uber <eruber@gmail.com>
 
-you can find it in the Python Standard Library on-line documentation:
-
-    https://docs.python.org/3/library/shelve.html
-
-See the unit tests in test_config.py
 
 """
 #------------------------------------------------------------------------------
@@ -29,38 +23,90 @@ import config
 #------------------------------------------------------------------------------
 # Third Party Dependencies
 #------------------------------------------------------------------------------
-import yaml
+#import yaml
+from ruamel import yaml
 
 #------------------------------------------------------------------------------
 class Config(config.Config):
     """
     Sub-class the base config.Config class and over-ride
-    its read() and write() methods with YAML versions
+    its read() and write() methods to support YAML.
+
+    Class Attributes:
+
+    .. note:: Class Attributes are not an attribute of an *instance* of a class (ie, the object); they are an attribute of the class itself.
+
+    .. note:: The Class Attributes specified below over-ride the same Class Attributes defined in the abstract base class config.Config.
+
     """
+
+    # def __init__(self, cfgfile=None, encoding=None, cfg=None, force=None, write_thru):
+
+    #     super(Config, self).__init__(cfgfile=cfgfile, encoding=encoding, cfg=cfg, force=force, write_thru=write_thru)
+
     # Class Attributes, 
     # not an attribute of an *instance* of a class, but the class itself
+
+    #: Default configuration file name, cfgfile, if none is specified during class instantiation
     DEFAULT_CFG_FILE   = "config.yaml"
+
+    #: Default configuration dictionary, cfg, if none is specified during class instantiation.
     DEFAULT_CFG        = {}
+    
+    #: Default force parameter value, force, if none is specified during class instantiation.
     DEFAULT_FORCE      = False
+
+    #: Default write_thru parameater value, write_thru, if none is specified during class instantiation.
     DEFAULT_WRITE_THRU = False
+
+    #: Default configuration file text encoding, encoding, if none is specified during class instantiation.
     DEFAULT_ENCODING   = 'utf-8'
 
-    def read(self):
+
+    def read(self, **kwargs):
         """
-        Reads the cfgfile, returns cfg if not errors.
+        Reads the cfgfile and stores the results in the configuration dictionary, cfg.
+
+        See `yaml documentation`_ for more details on what other keyword/value pairs,
+        **kwargs**, might be available as arguments.
+
+        For simple situations, the defaults work fine, no **kwargs** are typically required.
+        
+        Returns: 
+
+            The configuration dictionary accessible by the cfg property.
+        
+        .. _yaml documentation: http://yaml.readthedocs.io/en/latest/overview.html
+
         """
+        if 'Loader' not in kwargs:
+            kwargs['Loader'] = yaml.Loader
+
         with open(self._cfgfile, encoding=self._encoding, mode='r') as cp:
-            self._cfg = yaml.load(cp)
+            self._cfg = yaml.load(cp, **kwargs)
 
         return(self._cfg)
 
 
-    def write(self):
+    def write(self, **kwargs):
         """
-        Writes cfg to file system and return it. 
+        Writes the configuration dictionary, cfg, to file system using the file name cfgfile.
+        The file will be in YAML format.
+
+        See `yaml documentation`_ for more details on what other keyword/value pairs,
+        **kwargs**, might be available as arguments.
+
+        For simple situations, the defaults work fine, no **kwargs** are typically required.
+
+        Returns:
+
+            None
+
+        .. _yaml documentation: http://yaml.readthedocs.io/en/latest/overview.html
+
         """
         with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
-            yaml.dump(self._cfg, cp)
+            yaml.dump(self._cfg, cp, **kwargs)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
