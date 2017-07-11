@@ -24,7 +24,7 @@ import config
 # Third Party Dependencies
 #------------------------------------------------------------------------------
 #import yaml
-from ruamel import yaml
+from ruamel.yaml import YAML
 
 #------------------------------------------------------------------------------
 class Config(config.Config):
@@ -39,10 +39,6 @@ class Config(config.Config):
     .. note:: The Class Attributes specified below over-ride the same Class Attributes defined in the abstract base class config.Config.
 
     """
-
-    # def __init__(self, cfgfile=None, encoding=None, cfg=None, force=None, write_thru):
-
-    #     super(Config, self).__init__(cfgfile=cfgfile, encoding=encoding, cfg=cfg, force=force, write_thru=write_thru)
 
     # Class Attributes, 
     # not an attribute of an *instance* of a class, but the class itself
@@ -63,6 +59,17 @@ class Config(config.Config):
     DEFAULT_ENCODING   = 'utf-8'
 
 
+    def __init__(self, cfgfile=None, encoding=None, cfg=None, force=None, write_thru=None, **kwargs):
+
+        if 'typ' not in kwargs:
+            kwargs['typ'] = 'safe'
+
+        self.yaml = YAML(**kwargs) # default if not specfied is round-trip
+
+        # Call the base class's constructor
+        super(Config, self).__init__(cfgfile=cfgfile, encoding=encoding, cfg=cfg, force=force, write_thru=write_thru)
+
+
     def read(self, **kwargs):
         """
         Reads the cfgfile and stores the results in the configuration dictionary, cfg.
@@ -79,11 +86,9 @@ class Config(config.Config):
         .. _yaml documentation: http://yaml.readthedocs.io/en/latest/overview.html
 
         """
-        if 'Loader' not in kwargs:
-            kwargs['Loader'] = yaml.Loader
 
         with open(self._cfgfile, encoding=self._encoding, mode='r') as cp:
-            self._cfg = yaml.load(cp, **kwargs)
+            self._cfg = self.yaml.load(cp, **kwargs)
 
         return(self._cfg)
 
@@ -106,7 +111,7 @@ class Config(config.Config):
 
         """
         with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
-            yaml.dump(self._cfg, cp, **kwargs)
+            self.yaml.dump(self._cfg, cp, **kwargs)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
