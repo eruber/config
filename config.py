@@ -27,6 +27,14 @@ class Config(metaclass=abc.ABCMeta):
 
     Args:
 
+        **cfgdict**  - a dictionary
+
+        Specifies the configuration state used to initialize the configuration file, **cfgfile**, if it does not
+        already exist; if it does exist, this dictionary will be over-written by the contents of the
+        configuration file, **cfgfile**. To force re-iniitalization of the **cfgfile** with this dictionary
+        after the file already exists, use the **force** parameter. The default is the value of the
+        DEFAULT_CFG_DICT attribute.
+
         **cfgfile** - a string 
 
         Specifies the configuration file name, relative or absolute.
@@ -38,23 +46,15 @@ class Config(metaclass=abc.ABCMeta):
         Use this parameter to change the unicode encoding used to read/write the **cfgfile**.
         The default is the value of the **DEFAULT_ENCODING** attribute.
     
-        **cfg**  - a dictionary
-
-        Specifies the configuration state used to initialize the configuration file, **cfgfile**, if it does not
-        already exist; if it does exist, this dictionary will be over-written by the contents of the
-        configuration file, **cfgfile**. To force re-iniitalization of the **cfgfile** with this dictionary
-        after the file already exists, use the **force** parameter. The default is the value of the
-        DEFAULT_CFG attribute.
-    
         **force**   - a boolean
 
-        If True, forces the contents of the configuration dictionary specified, **cfg**, to over-write any
+        If True, forces the contents of the configuration dictionary specified, **cfgdict**, to over-write any
         existing **cfgfile**. The default behavior is for the configuration file to be read and used to initialize 
-        the configuration dictionary, **cfg**. The default is the value of the **DEFAULT_FORCE** attribute.
+        the configuration dictionary, **cfgdict**. The default is the value of the **DEFAULT_FORCE** attribute.
 
         **write_thru** - a boolean
 
-        If True, any changes made to the **cfg** property via an assignment will result in the configuration file, 
+        If True, any changes made to the **cfgdict** property via an assignment will result in the configuration file, 
         **cfgfile**, being immediately updated. If False, the configurate dictionary and the configuration file will not
         be in sync until the write method is executed. The default is the value of the **DEFAULT_WRITE_THRU** attribute.
 
@@ -92,7 +92,7 @@ class Config(metaclass=abc.ABCMeta):
     DEFAULT_CFG_FILE   = "config.cfg"
 
     #: Default configuration dictionary, cfg, if none is specified during class instantiation.
-    DEFAULT_CFG        = {}
+    DEFAULT_CFG_DICT        = {}
 
     #: Default force parameter value, force, if none is specified during class instantiation.
     DEFAULT_FORCE      = False
@@ -104,15 +104,15 @@ class Config(metaclass=abc.ABCMeta):
     DEFAULT_ENCODING   = 'utf-8'
 
 
-    def __init__(self, cfgfile=None, encoding=None, cfg=None, force=None, write_thru=None):
+    def __init__(self, cfgdict=None, cfgfile=None, encoding=None, force=None, write_thru=None):
 
         self._cfgfile    = os.path.abspath(cfgfile if isinstance(cfgfile, str) else self.DEFAULT_CFG_FILE)
         self._encoding   = encoding if isinstance(encoding, str) else self.DEFAULT_ENCODING
-        self._cfg        = cfg if isinstance(cfg, dict) else self.DEFAULT_CFG
+        self._cfgdict   = cfgdict if isinstance(cfgdict, dict) else self.DEFAULT_CFG_DICT
         self._force      = force if isinstance(force, bool) else self.DEFAULT_FORCE
         self._write_thru = write_thru if isinstance(write_thru, bool) else self.DEFAULT_WRITE_THRU
 
-        self._cfg_def_passed = cfg
+        self._cfg_def_passed = cfgdict
 
         self._initCfg()
 
@@ -134,7 +134,7 @@ class Config(metaclass=abc.ABCMeta):
         else:
             if os.path.exists(self._cfgfile):
                 if os.path.isfile(self._cfgfile):
-                    self._cfg = self.read()
+                    self._cfgdict = self.read()
                 else:
                     msg = format("'%s' names a directory! It should be a file. Please remove it or change config file name, and try again." % self._cfgfile)
                     raise ConfigFileNamesDirException(msg);
@@ -153,7 +153,7 @@ class Config(metaclass=abc.ABCMeta):
 
         Returns: 
 
-            The configuration dictionary accessible by the **cfg** property.
+            The configuration dictionary accessible by the **cfgdict** property.
 
         .. note:: This method should be over-ridden by a sub-class.
         
@@ -162,7 +162,7 @@ class Config(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def write(self):
         """
-        Writes **cfg** to file system using the file name **cfgfile**.
+        Writes **cfgdict** to file system using the file name **cfgfile**.
 
         Returns:
 
@@ -177,7 +177,7 @@ class Config(metaclass=abc.ABCMeta):
         """
         Property
 
-        **cfg** - the configuration dictionary
+        **cfgdict** - the configuration dictionary
 
         Returns the configuration dictionary.
 
@@ -187,10 +187,10 @@ class Config(metaclass=abc.ABCMeta):
 
         Raises:
 
-            TypeError if **cfg** assignment value is not a dictionary.
+            TypeError if **cfgdict** assignment value is not a dictionary.
 
         """
-        return(self._cfg)
+        return(self._cfgdict)
 
     @cfg.setter
     def cfg(self, dict_value):
@@ -201,7 +201,7 @@ class Config(metaclass=abc.ABCMeta):
         be updated.
         """
         if isinstance(dict_value, dict):
-            self._cfg = dict_value
+            self._cfgdict = dict_value
             if self._write_thru:
                 self.write()
         else:
@@ -215,9 +215,9 @@ class Config(metaclass=abc.ABCMeta):
 
         **writethru** - a boolean
 
-        If set to True, any dictionary assignments to the **cfg** property will result in the **cfgfile** being updated.
+        If set to True, any dictionary assignments to the **cfgdict** property will result in the **cfgfile** being updated.
 
-        If set to False, any dictionary assignments to the **cfg** property will be to the dictionary in memory only, 
+        If set to False, any dictionary assignments to the **cfgdict** property will be to the dictionary in memory only, 
         not to the **cfgfile**. An explicit **write()** will have to be done by the user to update **cfgfile**.
 
         Raises:
@@ -265,7 +265,7 @@ class Config(metaclass=abc.ABCMeta):
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
 
     from unittest import main
     main(module='tests.test_config', verbosity=2)

@@ -42,7 +42,7 @@ class Config(config.Config):
     DEFAULT_CFG_FILE   = "config.json"
 
     #: Default configuration dictionary, cfg, if none is specified during class instantiation.
-    DEFAULT_CFG        = {}
+    DEFAULT_CFG_DICT   = {}
     
     #: Default force parameter value, force, if none is specified during class instantiation.
     DEFAULT_FORCE      = False
@@ -69,9 +69,9 @@ class Config(config.Config):
 
         """
         with open(self._cfgfile, encoding=self._encoding, mode='r') as cp:
-            self._cfg = json.load(cp,  **kwargs)
+            self._cfgdict = json.load(cp,  **kwargs)
 
-        return(self._cfg)
+        return(self._cfgdict)
 
 
     def write(self, **kwargs):
@@ -105,12 +105,12 @@ class Config(config.Config):
             kwargs['sort_keys'] = True
 
         with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
-            json.dump(self._cfg, cp, **kwargs)
+            json.dump(self._cfgdict, cp, **kwargs)
 
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     from unittest import main
     main(module='tests.test_configjson', verbosity=2)

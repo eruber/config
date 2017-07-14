@@ -24,6 +24,8 @@ import config
 # Third Party Dependencies
 #------------------------------------------------------------------------------
 #import yaml
+import ruamel.yaml
+
 from ruamel.yaml import YAML
 
 #------------------------------------------------------------------------------
@@ -47,7 +49,7 @@ class Config(config.Config):
     DEFAULT_CFG_FILE   = "config.yaml"
 
     #: Default configuration dictionary, cfg, if none is specified during class instantiation.
-    DEFAULT_CFG        = {}
+    DEFAULT_CFG_DICT    = {}
     
     #: Default force parameter value, force, if none is specified during class instantiation.
     DEFAULT_FORCE      = False
@@ -59,18 +61,36 @@ class Config(config.Config):
     DEFAULT_ENCODING   = 'utf-8'
 
 
-    def __init__(self, cfgfile=None, encoding=None, cfg=None, force=None, write_thru=None, **kwargs):
+    def __init__(self, cfgobj=None, cfgfile=None, encoding=None, force=None, write_thru=None, **kwargs):
+
+        if not cfgobj:
+            cfgobj = self.DEFAULT_CFG_DICT
+
+        self._cfgobj = cfgobj
+
+        self.yaml = YAML(**kwargs) # default if not specfied is round-trip
+
+        # cfgobj can be one of three types:
+        #    a dict or 
+        #    a filepointer, a string, or a pathlib.Path() object
+        # if its not a dictionary, we attempt to convert it to a dictionary
+        if isinstance(cfgobj, dict):
+            cfgdict = cfgobj
+        else:
+            # cfgobj must be either a string, a fliepointer, or a pathlib.Path() object
+            try:
+                cfgdict = self.yaml.load(cfgobj)
+            except ruamel.yaml.error.YAMLStreamError as e:
+                raise(e)
 
         if 'typ' not in kwargs:
             kwargs['typ'] = 'safe'
 
-        self.yaml = YAML(**kwargs) # default if not specfied is round-trip
-
         # Call the base class's constructor
-        super(Config, self).__init__(cfgfile=cfgfile, encoding=encoding, cfg=cfg, force=force, write_thru=write_thru)
+        super(Config, self).__init__(cfgdict=cfgdict, cfgfile=cfgfile, encoding=encoding, force=force, write_thru=write_thru)
 
 
-    def read(self, **kwargs):
+    def read(self, cfgobj=None, **kwargs):
         """
         Reads the cfgfile and stores the results in the configuration dictionary, cfg.
 
@@ -86,11 +106,19 @@ class Config(config.Config):
         .. _yaml documentation: http://yaml.readthedocs.io/en/latest/overview.html
 
         """
+        if cfgobj:
+            try:
+                self._cfgdict = self.yaml.load(cfgobj)
+                return(self._cfgdict)
+            except ruamel.yaml.error.YAMLStreamError as e:
+                raise(e)
 
-        with open(self._cfgfile, encoding=self._encoding, mode='r') as cp:
-            self._cfg = self.yaml.load(cp, **kwargs)
+        else:
+            # read from cfgfile
+            with open(self._cfgfile, encoding=self._encoding, mode='r') as cp:
+                self._cfgdict = self.yaml.load(cp, **kwargs)
 
-        return(self._cfg)
+            return(self._cfgdict)
 
 
     def write(self, **kwargs):
@@ -111,15 +139,12 @@ class Config(config.Config):
 
         """
         with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
-            self.yaml.dump(self._cfg, cp, **kwargs)
+            self.yaml.dump(self._cfgdict, cp, **kwargs)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
 
     from unittest import main
     main(module='tests.test_configyaml', verbosity=2)
-
-
-
 
