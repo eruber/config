@@ -1,0 +1,6 @@
+# coverage configuration file
+[run]
+omit = 
+        VENV/*
+        tests/*
+        tests.py
