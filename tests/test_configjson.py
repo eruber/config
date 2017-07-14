@@ -32,7 +32,8 @@ class ConfigJsonTest(unittest.TestCase):
         # forces initialization of the config to the 
         # default configuration and does not read the
         # config file
-        self.c = configjson.Config(force=True)
+        #self.c = configjson.Config(force=True)
+        self.c = configjson.Config()
 
     def tearDown(self):
         # cleanup cfg file trash
@@ -55,7 +56,7 @@ class ConfigJsonTest(unittest.TestCase):
 
     def test_default_init_and_cfg_getter(self):
         # setUp has initialized self.c
-        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
 
 
     def test_cfg_setter_basic(self):
@@ -85,7 +86,7 @@ class ConfigJsonTest(unittest.TestCase):
 
         self.c = configjson.Config(force=True)
 
-        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
 
     def test_default_write_thru_disabled(self):
         """
@@ -101,8 +102,8 @@ class ConfigJsonTest(unittest.TestCase):
         # updated from the file system
         e = self.c.read()
 
-        self.assertEqual(e, self.c.DEFAULT_CFG)
-        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
+        self.assertEqual(e, self.c.DEFAULT_CFG_DICT)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
         self.assertFalse(s == self.c.cfg)
 
     def test_write_thru_enabled_via_constructor(self):
@@ -184,7 +185,7 @@ class ConfigJsonTest(unittest.TestCase):
         """
         """
         # setUp has initialized self.c, but we do not use it here
-        c = configjson.Config(cfg={'width' : 12, 'height' : 92}, force=True)
+        c = configjson.Config(cfgdict={'width' : 12, 'height' : 92}, force=True)
         self.assertEqual(c.cfg, {'width' : 12, 'height' : 92})
 
     def test_cfgfile_property_getter_default_value(self):
@@ -236,9 +237,9 @@ class ConfigJsonTest(unittest.TestCase):
         """
         # setUp has initialized self.c, but we do not use it here
         # cfg should be a dictionary, expect cfg to take on its default value
-        c = configjson.Config(cfg=[1, 2, 3])
+        c = configjson.Config(cfgdict=[1, 2, 3])
 
-        self.assertEqual(c.cfg, c.DEFAULT_CFG)
+        self.assertEqual(c.cfg, c.DEFAULT_CFG_DICT)
 
     def test_invalid_write_thru_flag_on_init(self):
         """
@@ -272,3 +273,16 @@ class ConfigJsonTest(unittest.TestCase):
         else:
             should_not_get_here_should_have_asserted_earlier = True
             self.assertFalse(should_not_get_here_should_have_asserted_earlier)
+
+    def test_cfgfile_setter(self):
+        """
+        """
+        self.c.cfgfile = "test_file.cfg"
+        self.assertEqual(self.c.cfgfile, os.path.abspath("test_file.cfg"))
+
+    def test_write_kwargs_indent_sort_keys(self):
+        """
+        """
+        self.c.write(indent=8, sort_keys = False)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
+

@@ -5,6 +5,7 @@ configyaml unit tests
 """
 import os.path
 import shutil
+from pathlib import Path
 
 # module under test
 import configyaml
@@ -18,8 +19,36 @@ D = {'log' : 'whatever-log-filename.log', 'verbose' : True}
 
 CUSTOM_CFG_FILE1 = 'custom.cfg'
 CUSTOM_CFG_FILE2 = 'configurate.yaml'
+TEST_77          = "test_77.yaml"
+TEST_77_UPDATED  = "test_77_updated.yaml"
 
 DIR_CFG_FILE = 'configuration'
+
+inp_str_1 = """\
+# example
+name:
+  # details
+  family: Smith   # very common
+  given: Alice    # one of the siblings
+  cousins: 3      # number of first cousins
+"""
+
+inp_str_1_udpated = """\
+# example
+name:
+  # details
+  family: Smith   # very common
+  given: Francesca # one of the siblings
+  cousins: 3      # number of first cousins
+"""
+PATH_LIB_1 = 'tests/yaml_config.cfg'
+
+INP_STR_1_DICT = dict()
+INP_STR_1_DICT['name'] = dict()
+INP_STR_1_DICT['name']['family']  = 'Smith'
+INP_STR_1_DICT['name']['given']    = 'Alice'
+INP_STR_1_DICT['name']['cousins'] = 3
+
 
 class ConfigYamlTest(unittest.TestCase):
 
@@ -53,6 +82,18 @@ class ConfigYamlTest(unittest.TestCase):
         if os.path.exists(dir_cfg):
             shutil.rmtree(dir_cfg)
 
+        test77 = os.path.abspath(TEST_77)
+        if os.path.exists(test77):
+            os.remove(test77)
+
+        test77upd = os.path.abspath(TEST_77_UPDATED)
+        if os.path.exists(test77upd):
+            os.remove(test77upd)
+
+        pathlib_1 = os.path.abspath(PATH_LIB_1)
+        if os.path.exists(pathlib_1):
+            os.remove(pathlib_1)
+
 
     #--------------------------------------------------------------------------
     # Test Cases    
@@ -60,7 +101,7 @@ class ConfigYamlTest(unittest.TestCase):
 
     def test_default_init_and_cfg_getter(self):
         # setUp has initialized self.c
-        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
 
 
     def test_cfg_setter_basic(self):
@@ -91,7 +132,7 @@ class ConfigYamlTest(unittest.TestCase):
 
         self.c = configyaml.Config(force=True)
 
-        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
 
     def test_default_write_thru_disabled(self):
         """
@@ -107,8 +148,8 @@ class ConfigYamlTest(unittest.TestCase):
         # updated from the file system
         e = self.c.read()
 
-        self.assertEqual(e, self.c.DEFAULT_CFG)
-        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG)
+        self.assertEqual(e, self.c.DEFAULT_CFG_DICT)
+        self.assertEqual(self.c.cfg, self.c.DEFAULT_CFG_DICT)
         self.assertFalse(s == self.c.cfg)
 
     def test_write_thru_enabled_via_constructor(self):
@@ -190,7 +231,7 @@ class ConfigYamlTest(unittest.TestCase):
         """
         """
         # setUp has initialized self.c, but we do not use it here
-        c = configyaml.Config(cfg={'width' : 12, 'height' : 92}, force=True)
+        c = configyaml.Config(cfgobj={'width' : 12, 'height' : 92}, force=True)
         self.assertEqual(c.cfg, {'width' : 12, 'height' : 92})
 
     def test_cfgfile_property_getter_default_value(self):
@@ -205,7 +246,7 @@ class ConfigYamlTest(unittest.TestCase):
         """
         # setUp has initialized self.c, but we do not use it here
         custom_cfg_file = CUSTOM_CFG_FILE1
-        c = configyaml.Config(cfgfile=custom_cfg_file)
+        c = configyaml.Config(cfgfile=custom_cfg_file, force=True)
         cfg_file = c.cfgfile
         self.assertEqual(os.path.basename(cfg_file), custom_cfg_file)
 
@@ -223,9 +264,15 @@ class ConfigYamlTest(unittest.TestCase):
         Assert that if a non-dictionary value is passed as cfg,
         then the default cfg is used
         """
+        import ruamel.yaml.error as ERR
         # setUp has initialized self.c, but we do not use it here
-        c = configyaml.Config(cfg=[1, 2, 3])
-        self.assertEqual(c.cfg, c.DEFAULT_CFG)
+        try:
+            c = configyaml.Config(cfgobj=[1, 2, 3])
+        except ERR.YAMLStreamError:
+            self.assertRaises(ERR.YAMLStreamError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
 
     def test_invalid_write_thru_flag_on_init(self):
         """
@@ -257,7 +304,7 @@ class ConfigYamlTest(unittest.TestCase):
         D['Shell']['size'] = (42, 123)
         D['Shell']['coins'] = [12, 33]
 
-        c = configyaml.Config(cfgfile=CUSTOM_CFG_FILE2, cfg=D, force=True)
+        c = configyaml.Config(cfgfile=CUSTOM_CFG_FILE2, cfgobj=D, force=True)
         self.assertEqual(c.cfg, D)
 
     def test_custom_exception_cfgfile_names_a_dir_not_a_file(self):
@@ -272,3 +319,55 @@ class ConfigYamlTest(unittest.TestCase):
         else:
             should_not_get_here_should_have_asserted_earlier = True
             self.assertFalse(should_not_get_here_should_have_asserted_earlier)
+
+    def test_cfg_obj_is_a_string_comments_preserved_round_trip(self):
+        """
+        """
+        c = configyaml.Config(cfgobj=inp_str_1, cfgfile=TEST_77, force=True)
+        cfgdict = c.read(inp_str_1)
+        self.assertEqual(cfgdict['name']['given'], 'Alice')
+        cfgdict['name']['given'] = 'Francesca'
+        c.write()
+        cfgdict2 = c.read()
+        self.assertEqual(cfgdict2['name']['given'], 'Francesca')
+
+        c2 = configyaml.Config(cfgobj=inp_str_1_udpated, cfgfile=TEST_77_UPDATED, force=True)
+        self.assertEqual(c.cfg, c2.cfg)
+
+
+    def test_invalid_cfgobj_passed_to_read(self):
+        """
+        """
+        import ruamel.yaml.error as ERR
+        try:
+            self.c.read(cfgobj=[1,2,3])
+        except ERR.YAMLStreamError:
+            self.assertRaises(ERR.YAMLStreamError)
+        else:
+            should_not_get_here_should_have_asserted_earlier = True
+            self.assertFalse(should_not_get_here_should_have_asserted_earlier)
+
+    def test_init_typ_kwarg(self):
+        c = configyaml.Config(typ='safe')
+        self.assertEqual(c.cfg, c.DEFAULT_CFG_DICT)
+
+    def test_cfg_obj_is_a_path_obj(self):
+        """
+        """
+        p = Path(PATH_LIB_1)
+        size = p.write_text(inp_str_1)
+
+        c = configyaml.Config(cfgobj=p, force=True)
+
+        # Cannot do this since with round-trip comment preservation, the c.cfg
+        # is not actually a dictionary, but a dictionary like object called
+        # a CommentMap
+        #self.assertEqual(c.cfg, INP_STR_1_DICT)
+
+        self.assertEqual(c.cfg['name']['family'], INP_STR_1_DICT['name']['family'])
+        self.assertEqual(c.cfg['name']['given'], INP_STR_1_DICT['name']['given'])
+        self.assertEqual(c.cfg['name']['cousins'], INP_STR_1_DICT['name']['cousins'])
+        
+       
+        
+
