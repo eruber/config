@@ -72,7 +72,7 @@ class Config(metaclass=abc.ABCMeta):
 
     .. warning:: Instantiating this class directly will result in a TypeError exception being raised. 
 
-    See test_config.py in the tests directory which includes this test.
+    See **test_config.py** in the **tests** directory which includes this test.
 
     Class Attributes:
 
@@ -88,19 +88,19 @@ class Config(metaclass=abc.ABCMeta):
     #--------------------------------------------------------------------------
 
 
-    #: Default configuration file name, cfgfile, if none is specified during class instantiation.
+    #: Default configuration file name, **cfgfile**, if none is specified during class instantiation.
     DEFAULT_CFG_FILE   = "config.cfg"
 
-    #: Default configuration dictionary, cfg, if none is specified during class instantiation.
+    #: Default configuration dictionary, **cfg**, if none is specified during class instantiation.
     DEFAULT_CFG_DICT        = {}
 
-    #: Default force parameter value, force, if none is specified during class instantiation.
+    #: Default force parameter value, **force**, if none is specified during class instantiation.
     DEFAULT_FORCE      = False
 
-    #: Default write_thru parameater value, write_thru, if none is specified during class instantiation.
+    #: Default write_thru parameater value, **write_thru**, if none is specified during class instantiation.
     DEFAULT_WRITE_THRU = False
 
-    #: Default configuration file text encoding, encoding, if none is specified during class instantiation.
+    #: Default configuration file text encoding, **encoding**, if none is specified during class instantiation.
     DEFAULT_ENCODING   = 'utf-8'
 
 
@@ -153,7 +153,7 @@ class Config(metaclass=abc.ABCMeta):
 
         Returns: 
 
-            The configuration dictionary accessible by the **cfgdict** property.
+            The configuration dictionary accessible by the **cfg** property.
 
         .. note:: This method should be over-ridden by a sub-class.
         
@@ -246,7 +246,7 @@ class Config(metaclass=abc.ABCMeta):
 
         Returns the *full absolute path* of the **cfgfile**.
 
-        Can used to set the **cfgfile** name.
+        Can be used to set the **cfgfile** name.
 
         Raises:
 
