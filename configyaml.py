@@ -243,8 +243,18 @@ class Config(config.Config):
         .. _yaml documentation: http://yaml.readthedocs.io/en/latest/overview.html
 
         """
-        with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
-            self.yaml.dump(self._cfgdict, cp, **kwargs)
+        if cfgdict:
+            inp = cfgdict
+        else:
+            inp = self._cfgdict
+
+        if stream:
+            # stream is a filepointer or a pathlib.Path() object
+            self.yaml.dump(inp, stream, **kwargs)
+        else:
+            # use the object's cfgfile to create a fliepointer to write to
+            with open(self._cfgfile, encoding=self._encoding, mode='w') as cp:
+                self.yaml.dump(inp, cp, **kwargs)
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
