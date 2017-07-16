@@ -6,6 +6,7 @@ configyaml unit tests
 import os.path
 import shutil
 from pathlib import Path
+import filecmp
 
 # module under test
 import configyaml
@@ -368,6 +369,31 @@ class ConfigYamlTest(unittest.TestCase):
         self.assertEqual(c.cfg['name']['given'], INP_STR_1_DICT['name']['given'])
         self.assertEqual(c.cfg['name']['cousins'], INP_STR_1_DICT['name']['cousins'])
         
+
+    def test_stream_is_a_path_obj_to_write(self):
+        """
+        """
+        p = Path(PATH_LIB_1)
+
+        c = configyaml.Config(cfgobj=INP_STR_1_DICT, force=True)
+
+        c.write(stream=p)
+
+        # now the default config file and the PATH_LIB_1 should be identical
+        self.assertTrue(filecmp.cmp(p, c.cfgfile, shallow=False))
+
        
-        
+    def test_cfgdict_passed_to_write(self):
+        """
+        """
+        p = Path(PATH_LIB_1)
+
+        c = configyaml.Config(cfgobj=INP_STR_1_DICT, force=True)
+
+        c.write(cfgdict=INP_STR_1_DICT, stream=p)
+
+        # now the default config file and the PATH_LIB_1 should be identical
+        self.assertTrue(filecmp.cmp(p, c.cfgfile, shallow=False))
+
+
 
