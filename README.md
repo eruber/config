@@ -1,6 +1,6 @@
 # Config
 
-A simple configuration manager that supports either **JSON** or **YAML** formatted configuration files.
+A simple Python configuration manager that supports either **JSON** or **YAML** formatted configuration files.
 ****
 ### Other Config Solutions
 The are other more complex and feature rich solutions to managing a configuration -- the most notable are:
